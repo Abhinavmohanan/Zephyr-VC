@@ -1,28 +1,31 @@
-import React, { useContext, createContext } from "react";
+import React, { useContext, createContext, useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { ClientToServerEvents, ServerToClientEvents } from "types/types";
 
 
-export const SocketContext = createContext<SocketContextProps | null>(null);
+export const SocketContext = createContext<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
 
-export interface SocketContextProps {
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
-}
 
 export const useSocket = () => {
-  const socketContext = useContext(SocketContext);
-  if (!socketContext) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return socketContext.socket;
+  return useContext(SocketContext);
 };
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const socket = io(`${import.meta.env.VITE_PUBLIC_API_KEY}`);
-  const socketContext = { socket };
+  const [socket, setSocket] = useState<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
+
+  useEffect(() => {
+    const newSocket = io(`${import.meta.env.VITE_PUBLIC_API_KEY}`, { autoConnect: false });
+    setSocket(newSocket)
+
+    return () => {
+      newSocket.disconnect();
+      newSocket.removeAllListeners();
+    }
+  }, [])
+
 
   return (
-    <SocketContext.Provider value={socketContext}>
+    <SocketContext.Provider value={socket}>
       {children}
     </SocketContext.Provider>
   );

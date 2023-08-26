@@ -1,10 +1,12 @@
 import './App.css'
 import axios from 'axios'
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'
+import { useSocket } from './context/SocketProvider';
 function App() {
   const navigate = useNavigate();
   const meetLink = useRef<HTMLInputElement>(null);
+  const socket = useSocket();
 
   const createMeet = async () => {
     const res = await axios.get(`${import.meta.env.VITE_PUBLIC_API_KEY}/meet/create`)
@@ -15,6 +17,11 @@ function App() {
     if (!meetLink.current?.value) return alert('Please enter a meet link');
     navigate(`/meet/${meetLink.current?.value}`)
   }
+
+  useEffect(() => {
+    if (socket?.connected) socket.disconnect();
+  }, [socket])
+
 
   return (
     // <ReactPlayer url={myStream} playing={true} muted={true} height='100%' width='100%' />

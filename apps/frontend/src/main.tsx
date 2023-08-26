@@ -13,7 +13,7 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "/meet/:id",
+    path: "/meet/:roomId",
     element: <Meet />
   }
 ]);

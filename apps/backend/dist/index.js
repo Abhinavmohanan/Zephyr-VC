@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
         callback({
             status: "success",
             message: "Joined room " + roomId,
-            secondarySocketId: (_d = (_c = rooms.get(roomId)) === null || _c === void 0 ? void 0 : _c.users[0]) !== null && _d !== void 0 ? _d : null,
+            secondarySocketId: (_d = (_c = rooms.get(roomId)) === null || _c === void 0 ? void 0 : _c.users[1]) !== null && _d !== void 0 ? _d : null,
         });
     });
     socket.on("disconnect", () => {

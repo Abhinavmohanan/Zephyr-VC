@@ -227,18 +227,18 @@ function Meet() {
 
   return (
     // <ReactPlayer url={myStream} playing={true} muted={true} height='100%' width='100%' />
-    <div className='h-screen flex flex-col justify-around'>
-      <div className='flex justify-center items-start gap-5'>
-        <div className='flex justify-center items-center bg-neutral w-[46rem] h-[40rem] rounded-3xl shadow-xl text-info'>
-          {myPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={myStream} playing={true} muted={true} height='100%' width='100%' /> :
+    <div className='h-screen flex flex-col justify-center gap-5'>
+      <div className='flex justify-center items-start px-5 gap-5 relative'>
+        <div className='flex justify-center items-center bg-neutral w-full h-[34rem] rounded-3xl shadow-xl text-info  max-lg:absolute max-lg:w-36 max-lg:h-36 bottom-2 right-8'>
+          {myPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={myStream} playing={true} muted={true} height='95%' width='100%' /> :
             `Video Disabled`}
         </div>
-        <div className='flex justify-center items-center bg-neutral w-[46rem] h-[40rem] rounded-3xl shadow-xl text-info'>
-          {otherPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={secondStream} playing={true} muted={false} height='100%' width='100%' /> :
-            secondarySocket ? `Share Meet ID: ${roomId}` : `Video Disabled`}
+        <div className='flex justify-center items-center bg-neutral w-full h-[34rem] rounded-3xl shadow-xl text-info '>
+          {secondarySocket ? `Share Meet ID: ${roomId}` :
+            otherPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={secondStream} playing={true} muted={false} height='95%' width='100%' /> : `Video Disabled`}
         </div>
       </div>
-      <div className='flex justify-center items-center self-center gap-5 bg-neutral w-[30rem] h-[5rem] rounded-3xl shadow-xl text-info'>
+      <div className='flex justify-center items-center self-center gap-5 bg-neutral w-[30rem] h-[5rem] rounded-3xl shadow-xl text-info max-lg:w-full'>
         <div className='border-solid border-2 rounded-full p-2' onClick={handleToggleVideo}>{myPlaying ? <BsCameraVideo size={30} /> : <BsCameraVideoOff size={30} />}</div>
         <div className='border-solid border-2 rounded-full p-2' onClick={handleToggleMute}>{mute ? <BsMicMute size={30} /> : <BsMic size={30} />}</div>
       </div>

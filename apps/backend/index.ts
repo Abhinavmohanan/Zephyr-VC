@@ -59,7 +59,7 @@ io.on("connection", (socket) => {
     callback({
       status: "success",
       message: "Joined room " + roomId,
-      secondarySocketId: rooms.get(roomId)?.users[0] ?? null,
+      secondarySocketId: rooms.get(roomId)?.users[1] ?? null,
     });
   });
 

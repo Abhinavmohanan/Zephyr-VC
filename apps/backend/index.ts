@@ -54,6 +54,7 @@ io.on("connection", (socket) => {
     }
     socket.join(roomId);
     socket.data.roomId = roomId;
+    console.log("Joined room " + roomId);
     socket.broadcast.to(roomId).emit("user-joined", { socketId: socket.id });
     callback({
       status: "success",

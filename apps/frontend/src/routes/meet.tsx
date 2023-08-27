@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player'
 import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from "react-icons/bs";
 import { useSocket } from '../context/SocketProvider';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Socket } from 'socket.io-client';
 // import { useParams } from 'react-router-dom'
 
 function Meet() {
@@ -21,8 +22,40 @@ function Meet() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const negotiation = (socket: Socket) => {
+      console.log("Negotiation Needed");
+      peerRef.current?.createOffer().then((offer) => {
+        peerRef.current?.setLocalDescription(offer).then(() => {
+          console.log("Sending Offer")
+          const payload = {
+            target: secondarySocket,
+            caller: socket.id,
+            sdp: offer
+          }
+          socket.emit("offer", payload);
+        })
+      }).catch((e) => console.log(e));
+    }
     if (socket) {
       if (socket.disconnected) socket.connect();
+      socket.on("user-left", () => {
+        console.log("User left");
+        setSecondarySocket(null);
+        setOtherPlaying(false);
+        setSecondaryStream(undefined);
+      })
+
+      socket.on("user-joined", (payload) => {
+        setSecondarySocket(payload.socketId);
+        stopStream();
+        if (myPlaying) {
+          getMyStream();
+        }
+        else {
+          if (!mute) getAudioStream();
+        }
+        console.log("User joined " + payload.socketId);
+      })
 
       if (!peerRef.current) {
         peerRef.current = new RTCPeerConnection({
@@ -37,14 +70,14 @@ function Meet() {
         });
       }
 
-      peerRef.current.onconnectionstatechange = () => {
-        if (peerRef.current?.connectionState === 'disconnected') {
-          console.log("Disconnected");
-          setSecondarySocket(null);
-          setOtherPlaying(false);
-          setSecondaryStream(undefined);
-        }
-      }
+      // peerRef.current.onconnectionstatechange = () => {
+      //   if (peerRef.current?.connectionState === 'disconnected') {
+      //     console.log("Disconnected");
+      //     setSecondarySocket(null);
+      //     setOtherPlaying(false);
+      //     setSecondaryStream(undefined);
+      //   }
+      // }
 
       peerRef.current.ontrack = (event) => {
         const stream = new MediaStream();
@@ -64,18 +97,7 @@ function Meet() {
 
       if (secondarySocket) {
         peerRef.current.onnegotiationneeded = () => {
-          console.log("Negotiation Needed");
-          peerRef.current?.createOffer().then((offer) => {
-            peerRef.current?.setLocalDescription(offer).then(() => {
-              console.log("Sending Offer")
-              const payload = {
-                target: secondarySocket,
-                caller: socket.id,
-                sdp: offer
-              }
-              socket.emit("offer", payload);
-            })
-          }).catch((e) => console.log(e));
+          negotiation(socket)
         }
 
         peerRef.current.onicecandidate = (e) => {
@@ -139,25 +161,8 @@ function Meet() {
           setSecondarySocket(data.secondarySocketId);
         })
       });
-
-      socket.on("user-left", () => {
-        console.log("User left");
-        setSecondarySocket(null);
-        setOtherPlaying(false);
-        setSecondaryStream(undefined);
-      })
-
-      socket.on("user-joined", (payload) => {
-        setSecondarySocket(payload.socketId);
-        console.log("User joined " + payload.socketId);
-      })
     }
-
-    return () => {
-      socket?.disconnect();
-      socket?.removeAllListeners();
-    }
-  }, [socket])
+  }, [navigate, roomId, socket])
 
   useEffect(() => {
     if (myStream) {
@@ -168,6 +173,13 @@ function Meet() {
     else {
       peerRef.current?.getSenders().forEach(sender => {
         peerRef.current?.removeTrack(sender);
+      })
+    }
+
+    return () => {
+      //Stop stream
+      myStream?.getTracks().forEach(track => {
+        track.stop();
       })
     }
   }, [myStream])
@@ -199,7 +211,7 @@ function Meet() {
 
   const handleToggleMute = () => {
     if (mute && !myPlaying) {
-      setMyStream(undefined);
+      stopStream();
       getAudioStream();
     }
     myStream?.getAudioTracks().forEach(track => {
@@ -208,18 +220,23 @@ function Meet() {
     setMuted(!mute);
   };
 
+  const stopStream = () => {
+    myStream?.getTracks().forEach(track => {
+      track.stop();
+    })
+    setMyStream(undefined)
+  }
+
   const handleToggleVideo = () => {
     if (myPlaying) {
       //Stop all track
-      myStream?.getTracks().forEach(track => {
-        track.stop();
-      })
-      setMyStream(undefined)
+      stopStream();
       if (!mute) {
         getAudioStream();
       }
     }
     else {
+      stopStream();
       getMyStream()
     }
     setMyPlaying(!myPlaying)
@@ -229,12 +246,12 @@ function Meet() {
     // <ReactPlayer url={myStream} playing={true} muted={true} height='100%' width='100%' />
     <div className='h-screen flex flex-col justify-center gap-5'>
       <div className='flex justify-center items-start px-5 gap-5 relative'>
-        <div className='flex justify-center items-center bg-neutral w-full h-[34rem] rounded-3xl shadow-xl text-info  max-lg:absolute max-lg:w-36 max-lg:h-36 bottom-2 right-8'>
+        <div className='flex justify-center items-center bg-neutral w-full h-[34rem] rounded-3xl shadow-xl text-info  max-lg:absolute max-lg:w-36 max-lg:h-36 bottom-2 right-8 max-lg:z-10'>
           {myPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={myStream} playing={true} muted={true} height='95%' width='100%' /> :
             `Video Disabled`}
         </div>
         <div className='flex justify-center items-center bg-neutral w-full h-[34rem] rounded-3xl shadow-xl text-info '>
-          {secondarySocket ? `Share Meet ID: ${roomId}` :
+          {!secondarySocket ? `Share Meet ID: ${roomId}` :
             otherPlaying ? <ReactPlayer style={{ transform: 'scaleX(-1)' }} url={secondStream} playing={true} muted={false} height='95%' width='100%' /> : `Video Disabled`}
         </div>
       </div>

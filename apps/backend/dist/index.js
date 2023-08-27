@@ -20,7 +20,7 @@ const rooms = new Map();
 io.on("connection", (socket) => {
     console.log("A user connected " + socket.id);
     socket.on("join-room", (roomId, userId, callback) => {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         if (!rooms.has(roomId)) {
             rooms.set(roomId, { users: [userId] });
         }
@@ -42,7 +42,9 @@ io.on("connection", (socket) => {
         callback({
             status: "success",
             message: "Joined room " + roomId,
-            secondarySocketId: (_d = (_c = rooms.get(roomId)) === null || _c === void 0 ? void 0 : _c.users[1]) !== null && _d !== void 0 ? _d : null,
+            secondarySocketId: ((_c = rooms.get(roomId)) === null || _c === void 0 ? void 0 : _c.users[1])
+                ? (_e = (_d = rooms.get(roomId)) === null || _d === void 0 ? void 0 : _d.users[0]) !== null && _e !== void 0 ? _e : null
+                : null,
         });
     });
     socket.on("disconnect", () => {
